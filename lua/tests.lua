@@ -1,19 +1,4 @@
-# Tests
-
-Some basic testing in Lua.
-
-`Tests`:
-```lua
-<<<Test for Equality>>>
-```
-
-## Testing for Equality
-
-Probably should refactor, but im lazy.
-
-`Test for Equality`:
-```lua
-function eqTest(act, exp, opts)
+function test(act, exp, opts)
     function isEq(x, y)
         if type(x) ~= type(y) then return false end
         if type(x) ~= "table" then return x == y end
@@ -22,7 +7,6 @@ function eqTest(act, exp, opts)
 
         return true
     end
-
     function strify(item, indent, expandTbl, curIndent, inTbl, tmpNoIndent)
         indent = indent or 2
         curIndent = curIndent or indent
@@ -85,4 +69,67 @@ function eqTest(act, exp, opts)
     end
     print("===========")
 end
-```
+function deepcopy(x)
+    local y = nil
+    if type(x) == "table" then
+        if #x == 0 then return {} end
+        y = {}
+        for k, v in pairs(x) do y[k] = deepcopy(v) end
+    else
+        y = x
+    end
+    return y
+end
+
+function deepcopyTests()
+    test(deepcopy({}), {}, {["msg"] = "deepcopy({})"})
+    test(deepcopy(nil), nil, {["msg"] = "deepcopy(nil)"})
+    test(deepcopy(false), false, {["msg"] = "deepcopy(false)"})
+    test(deepcopy(3.1), 3.1, {["msg"] = "deepcopy(3.1)"})
+    test(
+        deepcopy({["key"] = "value", {"a", "sub", {"list", 2}}}),
+        {["key"] = "value", {"a", "sub", {"list", 2}}},
+        {["msg"] = "deepcopy({[\"key\"] = \"value\", {\"a\", \"sub\", {\"list\", 2}}})"}
+    )
+end
+deepcopyTests()
+local errorMetatable = {}
+errorMetatable.__index = errorMetatable
+function err(errVal) return setmetatable({ val = errVal }, errorMetatable) end
+local oType = type
+type = function(obj)
+    if oType(obj) == "table" and getmetatable(obj) == errorMetatable then return "error" end
+    return oType(obj)
+end
+function catch(obj, f)
+    if type(obj) ~= "error" then return obj end
+    return f(obj, obj.msg)
+end
+
+function errorsTest()
+    test(err(2).val, 2, {["msg"] = "err(2).val"})
+    test(err("string").val, "string", {["msg"] = "err(string).val"})
+    test(err().val, nil, {["msg"] = "err().val"})
+    test(type(err()), "error", {["msg"] = "type(err())"})
+    test(
+        catch(
+            "ok",
+            function (err, val)
+                if val == nil then return "error" end
+            end
+        ),
+        "ok",
+        {["msg"] = "catch test on ok"}
+    )
+    test(
+        catch(
+            err(),
+            function (err, val)
+                if val == nil then return "error" end
+            end
+        ),
+        "error",
+        {["msg"] = "catch test on error"}
+    )
+end
+errorsTest()
