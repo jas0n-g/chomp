@@ -1,38 +1,34 @@
 function test(act, exp, opts)
-    function isEq(x, y)
+    function eq(x, y)
         if type(x) ~= type(y) then return false end
         if type(x) ~= "table" then return x == y end
         if #x ~= #y then return false end
-        for k, _ in pairs(x) do if not isEq(x[k], y[k]) then return false end end
+        for k, _ in pairs(x) do if not eq(x[k], y[k]) then return false end end
 
         return true
     end
-    function strify(item, indent, expandTbl, curIndent, inTbl, tmpNoIndent)
-        indent = indent or 2
-        curIndent = curIndent or indent
-        if type(expandTbl) ~= "boolean" then expandTbl = expandTbl or false end
-        if type(inTbl) ~= "boolean" then inTbl = inTbl or false end
+    function strify(obj, opts)
+        if type(obj) == "table" then
+            local expandTbl = false
+            local indent = 2
+            local curIndent = 0
+            if type(opts) == "table" then
+                if type(opts["expandTbl"]) == "boolean" then expandTbl = opts["expandTbl"] end
+                if type(opts["indent"]) == "number" and opts["indent"] == math.floor(opts["indent"]) then indent = opts["indent"] end
+                if type(opts["curIndent"]) == "number" and opts["curIndent"] == math.floor(opts["curIndent"]) then curIndent = opts["curIndent"] end
+            end
 
-        if type(item) == "string" then
-            if (inTbl and not expandTbl) or tmpNoIndent then return "\"" .. item .. "\"" end
-            return string.rep(" ", curIndent) .. "\"" .. item .. "\""
-        elseif type(item) ~= "table" then
-            if (inTbl and not expandTbl) or tmpNoIndent then return tostring(item) end
-            return string.rep(" ", curIndent) .. tostring(item)
-        else
-            local out = string.rep(" ", curIndent) .. "{"
-            if tmpNoIndent or not expandTbl then out = "{" end
-
-            for k, v in pairs(item) do
+            local out = "{"
+            for k, v in pairs(obj) do
                 if expandTbl then out = out .. "\n" end
                 if type(k) == "number" then
-                    out = out .. strify(v, indent, expandTbl, curIndent + indent, true)
+                    if expandTbl then out = out .. string.rep(" ", curIndent + indent) end
+                    out = out .. strify(v, {["expandTbl"] = expandTbl, ["indent"] = indent, ["curIndent"] = curIndent + indent, ["isStr"] = type(v) == "string"})
                 else
-                    if not tmpNoIndent and expandTbl then out = out .. string.rep(" ", curIndent + indent) end
-                    out = out .. "[\"" .. k .. "\"] = " .. strify(v, indent, expandTbl, curIndent + indent, true, true)
+                    if expandTbl then out = out .. string.rep(" ", curIndent + indent) end
+                    out = out .. "[\"" .. k .. "\"] = " .. strify(v, {["expandTbl"] = expandTbl, ["indent"] = indent, ["curIndent"] = curIndent + indent, ["isStr"] = type(v) == "string"})
                 end
-
-                if next(item, k) ~= nil then
+                if next(obj, k) ~= nil then
                     out = out .. ","
                     if not expandTbl then out = out .. " " end
                 end
@@ -40,96 +36,92 @@ function test(act, exp, opts)
             if expandTbl then out = out .. "\n" .. string.rep(" ", curIndent) end
             out = out .. "}"
             return out
+        elseif type(obj) == "string" then
+            return "\"" .. obj .. "\""
+        else
+            return tostring(obj)
         end
     end
 
-    if type(opts["msg"]) == "string" then msg = opts["msg"] end
-    if type(msg) == "string" then
-        print("===== " .. "Testing: \27[0;4m" .. msg .. "\27[0m =====")
+    if type(opts) == "table" and type(opts["msg"]) == "string" then
+        print("===== " .. "Testing: \27[0;4m" .. opts["msg"] .. "\27[0m =====")
     else
-        print("===========")
+        print("==========")
     end
 
-    if isEq(act, exp) then
+    if eq(act, exp) then
         print("\27[32m✅ Test Passed\27[0m")
     else
-        local indent = 2
-        local expandTbl = false
-
-        if type(opts) == "table" then
-            if type(opts["indent"]) == "number" then indent = opts["indent"] end
-            if type(opts["expandTbl"]) == "boolean" then expandTbl = opts["expandTbl"] end
-        end
-
         io.stderr:write("\27[31m❌ Test Failed\27[0m\n")
         io.stderr:write("\27[31mExpected:\27[0m\n")
-        io.stderr:write(strify(exp, indent, expandTbl) .. "\n")
+        io.stderr:write(strify(exp, opts) .. "\n")
         io.stderr:write("\27[31mGot:\27[0m\n")
-        io.stderr:write(strify(act, indent, expandTbl) .. "\n")
+        io.stderr:write(strify(act, opts) .. "\n")
     end
-    print("===========")
+    print("==========")
 end
-function deepcopy(x)
-    local y = nil
-    if type(x) == "table" then
-        if #x == 0 then return {} end
-        y = {}
-        for k, v in pairs(x) do y[k] = deepcopy(v) end
+function strify(obj, opts)
+    if type(obj) == "table" then
+        local expandTbl = false
+        local indent = 2
+        local curIndent = 0
+        if type(opts) == "table" then
+            if type(opts["expandTbl"]) == "boolean" then expandTbl = opts["expandTbl"] end
+            if type(opts["indent"]) == "number" and opts["indent"] == math.floor(opts["indent"]) then indent = opts["indent"] end
+            if type(opts["curIndent"]) == "number" and opts["curIndent"] == math.floor(opts["curIndent"]) then curIndent = opts["curIndent"] end
+        end
+
+        local out = "{"
+        for k, v in pairs(obj) do
+            if expandTbl then out = out .. "\n" end
+            if type(k) == "number" then
+                if expandTbl then out = out .. string.rep(" ", curIndent + indent) end
+                out = out .. strify(v, {["expandTbl"] = expandTbl, ["indent"] = indent, ["curIndent"] = curIndent + indent, ["isStr"] = type(v) == "string"})
+            else
+                if expandTbl then out = out .. string.rep(" ", curIndent + indent) end
+                out = out .. "[\"" .. k .. "\"] = " .. strify(v, {["expandTbl"] = expandTbl, ["indent"] = indent, ["curIndent"] = curIndent + indent, ["isStr"] = type(v) == "string"})
+            end
+            if next(obj, k) ~= nil then
+                out = out .. ","
+                if not expandTbl then out = out .. " " end
+            end
+        end
+        if expandTbl then out = out .. "\n" .. string.rep(" ", curIndent) end
+        out = out .. "}"
+        return out
+    elseif type(obj) == "string" then
+        return "\"" .. obj .. "\""
     else
-        y = x
+        return tostring(obj)
     end
-    return y
 end
-
-function deepcopyTests()
-    test(deepcopy({}), {}, {["msg"] = "deepcopy({})"})
-    test(deepcopy(nil), nil, {["msg"] = "deepcopy(nil)"})
-    test(deepcopy(false), false, {["msg"] = "deepcopy(false)"})
-    test(deepcopy(3.1), 3.1, {["msg"] = "deepcopy(3.1)"})
+function strifyTests()
+    test(strify("a string"), "\"a string\"", {["msg"] = "strify(\"a string\")"})
+    test(strify(2.1), "2.1", {["msg"] = "strify(2.1)"})
+    test(strify(true), "true", {["msg"] = "strify(true)"})
     test(
-        deepcopy({["key"] = "value", {"a", "sub", {"list", 2}}}),
-        {["key"] = "value", {"a", "sub", {"list", 2}}},
-        {["msg"] = "deepcopy({[\"key\"] = \"value\", {\"a\", \"sub\", {\"list\", 2}}})"}
-    )
+        strify({5, false, {"a", "sub", "list"}, ["key"] = "value"}),
+        "{5, false, {\"a\", \"sub\", \"list\"}, [\"key\"] = \"value\"}",
+        {["msg"] = "{5, false, {\"a\", \"sub\", \"list\"}, [\"key\"] = \"value\"}"})
 end
-deepcopyTests()
-local errorMetatable = {}
-errorMetatable.__index = errorMetatable
-function err(errVal) return setmetatable({ val = errVal }, errorMetatable) end
-local oType = type
-type = function(obj)
-    if oType(obj) == "table" and getmetatable(obj) == errorMetatable then return "error" end
-    return oType(obj)
-end
-function catch(obj, f)
-    if type(obj) ~= "error" then return obj end
-    return f(obj, obj.msg)
-end
-
-function errorsTest()
-    test(err(2).val, 2, {["msg"] = "err(2).val"})
-    test(err("string").val, "string", {["msg"] = "err(string).val"})
-    test(err().val, nil, {["msg"] = "err().val"})
-    test(type(err()), "error", {["msg"] = "type(err())"})
+strifyTests()
+function eqTests()
+    test(eq(5, 5), true, {["msg"] = "eq(5, 5)"})
+    test(eq(5, 4), false, {["msg"] = "eq(5, 4)"})
+    test(eq(5, "str"), false, {["msg"] = "eq(5, \"str\")"})
+    test(eq("str", "str"), true, {["msg"] = "eq(\"str\", \"str\")"})
+    test(eq("str", true), false, {["msg"] = "eq(\"str\", true)"})
+    test(eq(false, true), false, {["msg"] = "eq(false, true)"})
+    test(eq(false, false), true, {["msg"] = "eq(false, false)"})
     test(
-        catch(
-            "ok",
-            function (err, val)
-                if val == nil then return "error" end
-            end
-        ),
-        "ok",
-        {["msg"] = "catch test on ok"}
+        eq(false, {1, false, {"a", "sub", "list"}, ["key"] = "value"}),
+        false,
+        {["msg"] = "eq(false, {1, false, {\"a\", \"sub\", \"list\"}, [\"key\"] = \"value\"})"}
     )
     test(
-        catch(
-            err(),
-            function (err, val)
-                if val == nil then return "error" end
-            end
-        ),
-        "error",
-        {["msg"] = "catch test on error"}
+        eq({1, false, {"a", "sub", "list"}, ["key"] = "value"}, {1, false, {"a", "sub", "list"}, ["key"] = "value"}),
+        true,
+        {["msg"] = "eq({1, false, {\"a\", \"sub\", \"list\"}, [\"key\"] = \"value\"}, {1, false, {\"a\", \"sub\", \"list\"}, [\"key\"] = \"value\"})"}
     )
 end
-errorsTest()
+eqTests()
