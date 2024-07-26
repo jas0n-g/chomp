@@ -7,6 +7,8 @@ Helpers for Lua.
 - [Stringify](strify.md)
 - [Equality](equal.md)
 - [Testing](testing.md)
+- [Raise](raise.md)
+- [Errors](errors.md)
 
 ## Tests
 
@@ -15,4 +17,6 @@ Helpers for Lua.
 <<<testing.md:Test>>>
 <<<strify.md:Stringify Tests>>>
 <<<equal.md:Equality Tests>>>
+<<<raise.md:Raise Tests>>>
+<<<errors.md:Errors Tests>>>
 ```

@@ -1,5 +1,7 @@
 function test(act, exp, opts)
     function eq(x, y)
+        if type(x) == type(y) and type(x) == "raise" then return eq(x.raise, y.raise) end
+        if type(x) == type(y) and type(x) == "error" then return eq(x.err, y.err) end
         if type(x) ~= type(y) then return false end
         if type(x) ~= "table" then return x == y end
         if #x ~= #y then return false end
@@ -38,6 +40,10 @@ function test(act, exp, opts)
             return out
         elseif type(obj) == "string" then
             return "\"" .. obj .. "\""
+        elseif type(obj) == "raise" then
+            return "raise(" .. strify(obj.raise) .. ")"
+        elseif type(obj) == "error" then
+            return "err(" .. strify(obj.err) .. ")"
         else
             return tostring(obj)
         end
@@ -91,6 +97,10 @@ function strify(obj, opts)
         return out
     elseif type(obj) == "string" then
         return "\"" .. obj .. "\""
+    elseif type(obj) == "raise" then
+        return "raise(" .. strify(obj.raise) .. ")"
+    elseif type(obj) == "error" then
+        return "err(" .. strify(obj.err) .. ")"
     else
         return tostring(obj)
     end
@@ -102,7 +112,8 @@ function strifyTests()
     test(
         strify({5, false, {"a", "sub", "list"}, ["key"] = "value"}),
         "{5, false, {\"a\", \"sub\", \"list\"}, [\"key\"] = \"value\"}",
-        {["msg"] = "{5, false, {\"a\", \"sub\", \"list\"}, [\"key\"] = \"value\"}"})
+        {["msg"] = "{5, false, {\"a\", \"sub\", \"list\"}, [\"key\"] = \"value\"}"}
+    )
 end
 strifyTests()
 function eqTests()
@@ -125,3 +136,59 @@ function eqTests()
     )
 end
 eqTests()
+local raiseMetatable = {}
+raiseMetatable.__index = raiseMetatable
+function raise(val) return setmetatable({raise = val}, raiseMetatable) end
+
+local oType = type
+type = function (obj)
+    if oType(obj) == "table" and getmetatable(obj) == raiseMetatable then return "raise" end
+    return oType(obj)
+end
+function raiseTests()
+    test(raise("value").raise, "value", {["msg"] = "raise(\"value\").raise"})
+    test(raise(3).raise, 3, {["msg"] = "raise(3).raise"})
+    test(raise(false).raise, false, {["msg"] = "raise(false).raise"})
+    test(raise(raise(1)).raise, raise(1), {["msg"] = "raise(raise(1)).raise"})
+    test(type(raise(1)), "raise", {["msg"] = "type(raise(1))"})
+    test(strify(raise(1)), "raise(1)", {["msg"] = "strify(raise(1))"})
+end
+raiseTests()
+local errorMetatable = {}
+errorMetatable.__index = errorMetatable
+function err(val) return setmetatable({err = val}, errorMetatable) end
+
+local oType = type
+type = function (obj)
+    if oType(obj) == "table" and getmetatable(obj) == errorMetatable then return "error" end
+    return oType(obj)
+end
+function catch(obj, f)
+    if type(obj) ~= "error" then return obj end
+    return f(obj, obj.err)
+end
+function try(obj)
+    if type(obj) ~= "error" then return obj end
+    return raise(obj)
+end
+function errorsTest()
+    test(err("value").err, "value", {["msg"] = "err(\"value\").err"})
+    test(err(3).err, 3, {["msg"] = "err(3).err"})
+    test(err(false).err, false, {["msg"] = "err(false).err"})
+    test(err(err(1)).err, err(1), {["msg"] = "err(err(1)).err"})
+    test(type(err(1)), "error", {["msg"] = "type(err(1))"})
+    test(strify(err(1)), "err(1)", {["msg"] = "strify(err(1))"})
+    test(
+        catch(err(1), function (err, val) return err end),
+        err(1),
+        {["msg"] = "catch(err(1), ...)"}
+    )
+    test(
+        catch(1, function (err, val) return err end),
+        1,
+        {["msg"] = "catch(1, ...)"}
+    )
+    test(try(err(1)), raise(err(1)), {["msg"] = "try(err(1))"})
+    test(try(1), 1, {["msg"] = "try(1)"})
+end
+errorsTest()

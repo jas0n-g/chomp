@@ -35,6 +35,10 @@ function strify(obj, opts)
         return out
     elseif type(obj) == "string" then
         return "\"" .. obj .. "\""
+    elseif type(obj) == "raise" then
+        return "raise(" .. strify(obj.raise) .. ")"
+    elseif type(obj) == "error" then
+        return "err(" .. strify(obj.err) .. ")"
     else
         return tostring(obj)
     end
@@ -53,7 +57,8 @@ function strifyTests()
     test(
         strify({5, false, {"a", "sub", "list"}, ["key"] = "value"}),
         "{5, false, {\"a\", \"sub\", \"list\"}, [\"key\"] = \"value\"}",
-        {["msg"] = "{5, false, {\"a\", \"sub\", \"list\"}, [\"key\"] = \"value\"}"})
+        {["msg"] = "{5, false, {\"a\", \"sub\", \"list\"}, [\"key\"] = \"value\"}"}
+    )
 end
 strifyTests()
 ```
