@@ -9,6 +9,8 @@ Helpers for Lua.
 - [Testing](testing.md)
 - [Raise](raise.md)
 - [Errors](errors.md)
+- [Deepcopy](deepcopy.md)
+- [Table Functions](tables.md)
 
 ## Tests
 
@@ -19,4 +21,6 @@ Helpers for Lua.
 <<<equal.md:Equality Tests>>>
 <<<raise.md:Raise Tests>>>
 <<<errors.md:Errors Tests>>>
+<<<deepcopy.md:Deepcopy Tests>>>
+<<<tables.md:Tables Tests>>>
 ```

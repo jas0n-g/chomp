@@ -6,7 +6,6 @@ Raise a value.
 ```lua
 <<<Errors Type>>>
 <<<Catch an Error>>>
-<<<Try>>>
 ```
 
 Also added error support to [stringify](strify.md) and [equality](equal.md).
@@ -40,20 +39,6 @@ function catch(obj, f)
 end
 ```
 
-## Try
-
-If an object is an error, it returns a raise value of the error. Depends on
-[raise](raise.md). After getting a value from this, check if the value is of
-type `raise` and return it.
-
-`Try`:
-```lua
-function try(obj)
-    if type(obj) ~= "error" then return obj end
-    return raise(obj)
-end
-```
-
 ## Errors Tests
 
 `Errors Tests`:
@@ -76,8 +61,6 @@ function errorsTest()
         1,
         {["msg"] = "catch(1, ...)"}
     )
-    test(try(err(1)), raise(err(1)), {["msg"] = "try(err(1))"})
-    test(try(1), 1, {["msg"] = "try(1)"})
 end
 errorsTest()
 ```
