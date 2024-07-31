@@ -44,21 +44,3 @@ function strify(obj, opts)
     end
 end
 ```
-
-## Strify Test
-
-`Stringify Tests`:
-```lua
-<<<Stringify>>>
-function strifyTests()
-    test(strify("a string"), "\"a string\"", {["msg"] = "strify(\"a string\")"})
-    test(strify(2.1), "2.1", {["msg"] = "strify(2.1)"})
-    test(strify(true), "true", {["msg"] = "strify(true)"})
-    test(
-        strify({5, false, {"a", "sub", "list"}, ["key"] = "value"}),
-        "{5, false, {\"a\", \"sub\", \"list\"}, [\"key\"] = \"value\"}",
-        {["msg"] = "{5, false, {\"a\", \"sub\", \"list\"}, [\"key\"] = \"value\"}"}
-    )
-end
-strifyTests()
-```

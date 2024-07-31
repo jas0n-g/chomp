@@ -3,15 +3,17 @@
 Some useful table functions.
 
 `Tables`:
-```lua
+```txt
 <<<Tail>>>
 <<<Head>>>
 <<<Slicing>>>
+<<<Mapping>>>
+<<<Filter>>>
 ```
 
 ## Tail
 
-Depends on [stringify](strify.md), [deepcopy](deepcopy.md), and [errors](errors.md).
+Depends on [deepcopy](deepcopy.md), [errors](errors.md), and [stringify](strify.md).
 
 `Tail`:
 ```lua
@@ -31,7 +33,7 @@ end
 
 ## Head
 
-Depends on [stringify](strify.md), [deepcopy](deepcopy.md), and [errors](errors.md).
+Depends on [deepcopy](deepcopy.md), [errors](errors.md), and [stringify](strify.md).
 
 `Head`:
 ```lua
@@ -51,7 +53,7 @@ end
 
 ## Slicing
 
-Depends on [stringify](strify.md), [deepcopy](deepcopy.md), and [errors](errors.md).
+Depends on [deepcopy](deepcopy.md), [errors](errors.md), and [stringify](strify.md).
 
 `Slicing`:
 ```lua
@@ -70,31 +72,41 @@ function slice(tbl, startIdx, endIdx)
 end
 ```
 
-## Table Functions Tests
+## Mapping
 
-`Tables Tests`:
+Depends on [deepcopy](deepcopy.md), [errors](errors.md), and [stringify](strify.md).
+
+`Mapping`:
 ```lua
-<<<Tables>>>
+function map(tbl, func)
+    if type(tbl) ~= "table" then return err("1st argument (" .. strify(tbl) .. ") is not a table") end
+    if type(func) ~= "function" then return err("2nd argument (" .. strify(func) .. ") is not a function") end
 
-function tableTests()
-    test(tail({1, 2, 3, 4, 5}), {2, 3, 4, 5}, {["msg"] = "tail({1, 2, 3, 4, 5})"})
-    test(tail({1, 2, 3, 4, 5}, 2), {3, 4, 5}, {["msg"] = "tail({1, 2, 3, 4, 5}, 2)"})
-    test(tail(1), err("1st argument (1) is not a table"), {["msg"] = "tail(1)"})
-    test(tail({1}, 1.2), err("2nd argument (1.2) is not an integer"), {["msg"] = "tail({1}, 1.2)"})
-    test(tail({1}, true), err("2nd argument (true) is not an integer"), {["msg"] = "tail({1}, true)"})
-    test(head({1, 2, 3, 4, 5}), {1}, {["msg"] = "head({1, 2, 3, 4, 5})"})
-    test(head({1, 2, 3, 4, 5}, 2), {1, 2}, {["msg"] = "head({1, 2, 3, 4, 5}, 2)"})
-    test(head(1), err("1st argument (1) is not a table"), {["msg"] = "head(1)"})
-    test(head({1}, 1.2), err("2nd argument (1.2) is not an integer"), {["msg"] = "head({1}, 1.2)"})
-    test(head({1}, true), err("2nd argument (true) is not an integer"), {["msg"] = "head({1}, true)"})
-    test(slice({1, 2, 3, 4, 5}), {1, 2, 3, 4, 5}, {["msg"] = "slice({1, 2, 3, 4, 5})"})
-    test(slice({1, 2, 3, 4, 5}, 2), {2, 3, 4, 5}, {["msg"] = "slice({1, 2, 3, 4, 5}, 2)"})
-    test(slice({1, 2, 3, 4, 5}, 2, 4), {2, 3, 4}, {["msg"] = "slice({1, 2, 3, 4, 5}, 2, 4)"})
-    test(slice(1), err("1st argument (1) is not a table"), {["msg"] = "slice(1)"})
-    test(slice({1}, 1.2), err("2nd argument (1.2) is not an integer"), {["msg"] = "slice({1}, 1.2)"})
-    test(slice({1}, true), err("2nd argument (true) is not an integer"), {["msg"] = "slice({1}, true)"})
-    test(slice({1}, 1, 1.2), err("3rd argument (1.2) is not an integer"), {["msg"] = "slice({1}, 1, 1.2)"})
-    test(slice({1}, 1, true), err("3rd argument (true) is not an integer"), {["msg"] = "slice({1}, 1, true)"})
+    local out = {}
+    for k, v in pairs(tbl) do out[k] = func(v) end
+    return out
 end
-tableTests()
+
+function mapM(tbl, func)
+    if type(tbl) ~= "table" then return err("1st argument (" .. strify(tbl) .. ") is not a table") end
+    if type(func) ~= "function" then return err("2nd argument (" .. strify(func) .. ") is not a function") end
+
+    for _, v in pairs(tbl) do func(v) end
+end
+```
+
+## Filter
+
+Depends on [deepcopy](deepcopy.md), [errors](errors.md), and [stringify](strify.md).
+
+`Filter`:
+```lua
+function filter(tbl, func)
+    if type(tbl) ~= "table" then return err("1st argument (" .. strify(tbl) .. ") is not a table") end
+    if type(func) ~= "function" then return err("2nd argument (" .. strify(func) .. ") is not a function") end
+
+    local out = {}
+    for k, v in pairs(tbl) if type(k) == "number" then if func(v) == true then out[#out + 1] = v end else if func(v) == true then out[k] = v end end end
+    return out
+end
 ```

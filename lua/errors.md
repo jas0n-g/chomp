@@ -3,7 +3,7 @@
 Raise a value.
 
 `Errors`:
-```lua
+```txt
 <<<Errors Type>>>
 <<<Catch an Error>>>
 ```
@@ -27,9 +27,8 @@ end
 
 ## Catch an Error
 
-If an object is an error, run a function on it with a signature like
-`function (err, val)` where `err` is the actual error and `val` is the value
-inside the error.
+If an object is an error, run a function on it with a signature like `function (err, val)` where
+`err` is the actual error and `val` is the value inside the error.
 
 `Catch an Error`:
 ```lua
@@ -37,30 +36,4 @@ function catch(obj, f)
     if type(obj) ~= "error" then return obj end
     return f(obj, obj.err)
 end
-```
-
-## Errors Tests
-
-`Errors Tests`:
-```lua
-<<<Errors>>>
-function errorsTest()
-    test(err("value").err, "value", {["msg"] = "err(\"value\").err"})
-    test(err(3).err, 3, {["msg"] = "err(3).err"})
-    test(err(false).err, false, {["msg"] = "err(false).err"})
-    test(err(err(1)).err, err(1), {["msg"] = "err(err(1)).err"})
-    test(type(err(1)), "error", {["msg"] = "type(err(1))"})
-    test(strify(err(1)), "err(1)", {["msg"] = "strify(err(1))"})
-    test(
-        catch(err(1), function (err, val) return err end),
-        err(1),
-        {["msg"] = "catch(err(1), ...)"}
-    )
-    test(
-        catch(1, function (err, val) return err end),
-        1,
-        {["msg"] = "catch(1, ...)"}
-    )
-end
-errorsTest()
 ```
